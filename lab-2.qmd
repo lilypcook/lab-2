@@ -84,6 +84,15 @@ region.names <- separate_wider_delim(region.names, delim = "=",cols = c("value")
 region.names <- region.names %>% mutate(Regions_Report = as.numeric(Regions_Report))
 data.full <- merge(data.full,region.names, by = "Regions_Report")
 
+data.full <- data.full %>% mutate(region = case_when(
+    Regions_Report %in% c(1, 2, 4, 5) ~ "Africa",
+    Regions_Report %in% c(6, 7, 8) ~ "Americas",
+    Regions_Report %in% c(9, 10, 11, 12, 18) ~ "Asia",
+    Regions_Report %in% c(3, 13) ~ "Middle East and North Africa",
+    Regions_Report %in% c(15, 16, 17, 0) ~ "Europe",
+    Regions_Report %in% c(14) ~ "Former Soviet Union"
+  ))
+
 ```
 
 6.  Improve the visualization above by either re-creating it with the issues you identified fixed OR by creating a new visualization that you believe tells the same story better.
@@ -91,7 +100,7 @@ data.full <- merge(data.full,region.names, by = "Regions_Report")
 ```{r}
 #| label: new-and-improved-visualization
 
-data.full %>% select(WP5,)
+data.full %>% select(country, region, Q25) %>% group_by(country) %>% summarise(TotAgree = sum(Q25 < 3))
 
 ```
 
