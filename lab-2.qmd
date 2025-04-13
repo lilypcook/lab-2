@@ -181,6 +181,8 @@ The full Wellcome Global Monitor 2018 report can be found here: <https://wellcom
 
 18. Improve the visualization above by either re-creating it with the issues you identified fixed OR by creating a new visualization that you believe tells the same story better.
 
+19. TEST
+
 ```{r}
 #| label: third-improved-visualization
 
