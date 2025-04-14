@@ -74,18 +74,26 @@ country.names <- '1=United States, 2=Egypt, 3=Morocco, 4=Lebanon, 5=Saudi Arabia
 country.names <- strsplit(country.names, split = ",")
 country.names <- country.names[[1]]
 country.names <- as_tibble(country.names)
-country.names <- separate_wider_delim(country.names, delim = "=",cols = c("value"), names = c("WP5", "country"))
+country.names <- separate_wider_delim(country.names, 
+                                      delim = "=",
+                                      cols = c("value"), 
+                                      names = c("WP5", "country"))
+
 country.names <- country.names %>% mutate(WP5 = as.numeric(WP5))
-data.full <- merge(data.full,country.names, by = "WP5")
+data.full <- merge(data.full, country.names, by = "WP5")
 
 region.names <- "0=Not assigned, 1=Eastern Africa,2=Central Africa,3=North Africa,4=Southern Africa,5=Western Africa,6=Central America and Mexico,7=Northern America,8=South America,9=Central Asia,10=East Asia,11=Southeast Asia,12=South Asia,13=Middle East,14=Eastern Europe,15=Northern Europe,16=Southern Europe,17=Western Europe,18=Aus/NZ"
 
 region.names <- strsplit(region.names, split = ",")
 region.names <- region.names[[1]]
 region.names <- as_tibble(region.names)
-region.names <- separate_wider_delim(region.names, delim = "=",cols = c("value"), names = c("Regions_Report", "Region_Name"))
+region.names <- separate_wider_delim(region.names, 
+                                     delim = "=", 
+                                     cols = c("value"), 
+                                     names = c("Regions_Report", "Region_Name"))
+
 region.names <- region.names %>% mutate(Regions_Report = as.numeric(Regions_Report))
-data.full <- merge(data.full,region.names, by = "Regions_Report")
+data.full <- merge(data.full, region.names, by = "Regions_Report")
 
 data.full <- data.full %>% mutate(region = case_when(
     Regions_Report %in% c(1, 2, 4, 5) ~ "Sub-Saharan Africa",
@@ -109,7 +117,9 @@ percents <- data.full %>% select(country, region, Q25) %>%
   drop_na() %>%
   mutate(agree = ifelse(Q25 < 3, 1, 0)) %>% 
   group_by(country, region) %>%
-  summarise(totagree = sum(agree), tot = n(), pctagree = totagree/tot)
+  summarise(totagree = sum(agree), 
+            tot = n(), 
+            pctagree = totagree/tot)
 
 medians <- percents %>%
   group_by(region)%>%
@@ -120,9 +130,16 @@ medians <- percents %>%
 percents %>%
     ggplot() +
     geom_vline(data = medians, aes(xintercept = medregion), color = "black")+
-    geom_dotplot(aes(x = pctagree, fill = region), method = "histodot", dotsize = 0.6, binwidth = 0.01) +
+    geom_dotplot(aes(x = pctagree, fill = region), 
+                 method = "histodot", 
+                 dotsize = 0.6, 
+                 binwidth = 0.01) +
     facet_wrap(~region, ncol = 1)+
-    geom_text(aes(x = 0.3, y = 0.5, label = region, color = region), hjust = "inward", size =5, family = "Times",fontface = "bold")+
+    geom_text(aes(x = 0.3, y = 0.5, label = region, color = region), 
+              hjust = "inward", 
+              size =5, 
+              family = "Times",
+              fontface = "bold")+
     scale_fill_brewer(palette = "Set2") +
     scale_color_brewer(palette = "Set2")+
     theme_minimal() +
@@ -133,8 +150,9 @@ percents %>%
       strip.text = element_blank(),
       text= element_text(family = "Times"),
       plot.title = element_text(face = "bold")) +
-  scale_x_continuous(labels = scales::percent_format(accuracy = 1))+
-    labs(title = "Percent of people who believe vaccines are safe by country and global region", subtitle = "Black lines represent region median", x = "", y = "")
+      scale_x_continuous(labels = scales::percent_format(accuracy = 1))+
+      labs(title = "Percent of people who believe vaccines are safe by country and global region", subtitle = "Black lines represent region median", 
+           x = "", y = "")
 
   
 
@@ -184,12 +202,15 @@ The full Wellcome Global Monitor 2018 report can be found here: <https://wellcom
 #| warning: false
 
 library(leaflet)
+library(forcats)
 library(rnaturalearth)
 library(rnaturalearthdata)
 
 vaccinepct <- data.full %>% select(country, Q28) %>% drop_na() %>% 
   group_by(country) %>% 
-  summarise(tot = n(), totyes = sum(Q28==1), pctyes = totyes/tot) %>%
+  summarise(tot = n(), 
+            totyes = sum(Q28==1), 
+            pctyes = totyes/tot) %>%
   mutate(pctgroup = case_when(
     pctyes < 0.7 ~ 1,
     pctyes >= 0.7 & pctyes < 0.8 ~ 2,
@@ -210,8 +231,8 @@ vaccinepct <- vaccinepct %>%
     country == "Republic of Congo" ~ "Republic of the Congo",
     country == "Russia" ~ "Russian Federation",
     country == "South Korea" ~ "Republic of Korea",
-    TRUE ~ country
-  ), name_long = country)
+    TRUE ~ country), 
+    name_long = country)
 
 vaccinepct[which(!(vaccinepct$name_long %in% mapdata$name_long)), 1]
 
@@ -225,16 +246,17 @@ mergedmap <- mergedmap %>%
     pctyes >= 0.9 & pctyes < 0.95 ~ 4,
     pctyes >= 0.95 ~ 5,
     is.na(pctyes) ~ 0),
-    percentlabel = round(pctyes*100,2),
-    percentlabel = ifelse(is.na(percentlabel),"Not surveyed",paste(percentlabel,"%")),
-    grouplabel = factor(case_when(
+    percentlabel = round(pctyes * 100, 2),
+    percentlabel = ifelse(is.na(percentlabel), "Not surveyed", paste(percentlabel,"%")),
+    grouplabel = case_when(
       pctgroup == 0 ~ "Not surveyed",
       pctgroup == 1 ~ "Less than 70%",
       pctgroup == 2 ~ "70% to 79%",
       pctgroup == 3 ~ "80% to 89%",
       pctgroup == 4 ~ "90% to 94%",
       pctgroup == 5 ~ "95% and above"
-    )))
+    ), 
+    grouplabel = fct_reorder(grouplabel, pctgroup))
 
 mappal <- colorNumeric('RdPu', domain = mergedmap$pctgroup)
 labelpal <- colorFactor('RdPu', domain = mergedmap$grouplabel)
@@ -242,12 +264,16 @@ labelpal <- colorFactor('RdPu', domain = mergedmap$grouplabel)
 leaflet(mergedmap) %>%
   addTiles()%>%
   addPolygons(
-    fillColor = ~mappal(pctgroup),
+    fillColor = ~ mappal(pctgroup),
     weight = 1, fillOpacity = 0.7,
     color = "lightgray",
-    label = ~paste(name_long,":",percentlabel))%>%
-  addLegend(pal = pal, values = ~ labelpal,  title = "People who say their children have been vaccinated")
+    label = ~paste(name_long, ":", percentlabel)) %>%
+  addLegend(
+    pal = labelpal, values = ~grouplabel,  
+    title = "People who say their children have been vaccinated"
+  )
   
+
 ```
 
 ## Third Data Visualization Improvement
