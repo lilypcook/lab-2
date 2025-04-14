@@ -224,14 +224,30 @@ mergedmap <- mergedmap %>%
     pctyes >= 0.8 & pctyes < 0.9 ~ 3,
     pctyes >= 0.9 & pctyes < 0.95 ~ 4,
     pctyes >= 0.95 ~ 5,
-    is.na(pctyes) ~ 0
-  ))
+    is.na(pctyes) ~ 0),
+    percentlabel = round(pctyes*100,2),
+    percentlabel = ifelse(is.na(percentlabel),"Not surveyed",paste(percentlabel,"%")),
+    grouplabel = factor(case_when(
+      pctgroup == 0 ~ "Not surveyed",
+      pctgroup == 1 ~ "Less than 70%",
+      pctgroup == 2 ~ "70% to 79%",
+      pctgroup == 3 ~ "80% to 89%",
+      pctgroup == 4 ~ "90% to 94%",
+      pctgroup == 5 ~ "95% and above"
+    )))
+
+mappal <- colorNumeric('RdPu', domain = mergedmap$pctgroup)
+labelpal <- colorFactor('RdPu', domain = mergedmap$grouplabel)
 
 leaflet(mergedmap) %>%
   addTiles()%>%
   addPolygons(
-    fillColor = ~pctgroup
-  )
+    fillColor = ~mappal(pctgroup),
+    weight = 1, fillOpacity = 0.7,
+    color = "lightgray",
+    label = ~paste(name_long,":",percentlabel))%>%
+  addLegend(pal = pal, values = ~ labelpal,  title = "People who say their children have been vaccinated")
+  
 ```
 
 ## Third Data Visualization Improvement
