@@ -158,7 +158,7 @@ The full Wellcome Global Monitor 2018 report can be found here: <https://wellcom
 
 8.  List the variables that appear to be displayed in this visualization.
 
-    Country, % of people claiming to have ever vaccinated their children
+    Country, % of people claiming to have ever vaccinated their children (Q28)
 
 9.  Now that you're versed in the grammar of graphics (ggplot), list the aesthetics used and which variables are specified for each.
 
@@ -185,8 +185,53 @@ The full Wellcome Global Monitor 2018 report can be found here: <https://wellcom
 
 library(leaflet)
 library(rnaturalearth)
+library(rnaturalearthdata)
 
-world <- ne_countries()
+vaccinepct <- data.full %>% select(country, Q28) %>% drop_na() %>% 
+  group_by(country) %>% 
+  summarise(tot = n(), totyes = sum(Q28==1), pctyes = totyes/tot) %>%
+  mutate(pctgroup = case_when(
+    pctyes < 0.7 ~ 1,
+    pctyes >= 0.7 & pctyes < 0.8 ~ 2,
+    pctyes >= 0.8 & pctyes < 0.9 ~ 3,
+    pctyes >= 0.9 & pctyes < 0.95 ~ 4,
+    pctyes >= 0.95 ~ 5
+  ))
+
+mapdata <-  ne_countries(scale = "medium", returnclass = "sf")
+
+vaccinepct <- vaccinepct %>%
+  mutate(country = case_when(
+    country == "Eswatini" ~ "Kingdom of eSwatini",
+    country == "Ivory Coast" ~ "Côte d'Ivoire",
+    country == "Laos" ~ "Lao PDR",
+    country == "Macedonia" ~ "North Macedonia",
+    country == "Palestinian Territories" ~ "Palestine",
+    country == "Republic of Congo" ~ "Republic of the Congo",
+    country == "Russia" ~ "Russian Federation",
+    country == "South Korea" ~ "Republic of Korea",
+    TRUE ~ country
+  ), name_long = country)
+
+vaccinepct[which(!(vaccinepct$name_long %in% mapdata$name_long)), 1]
+
+mergedmap <- left_join(mapdata, vaccinepct, by = "name_long")
+
+mergedmap <- mergedmap %>%
+  mutate(pctgroup = case_when(
+    pctyes < 0.7 ~ 1,
+    pctyes >= 0.7 & pctyes < 0.8 ~ 2,
+    pctyes >= 0.8 & pctyes < 0.9 ~ 3,
+    pctyes >= 0.9 & pctyes < 0.95 ~ 4,
+    pctyes >= 0.95 ~ 5,
+    is.na(pctyes) ~ 0
+  ))
+
+leaflet(mergedmap) %>%
+  addTiles()%>%
+  addPolygons(
+    fillColor = ~pctgroup
+  )
 ```
 
 ## Third Data Visualization Improvement
