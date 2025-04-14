@@ -60,6 +60,7 @@ There are two worksheets in the downloaded dataset file. You may need to read th
 
 ```{r}
 #| label: read-in-wellcome-data
+#| output: false
 
 library(tidyverse)
 library(readxl)
@@ -139,6 +140,8 @@ percents %>%
 
 ```
 
+I decided to create a dotplot to better show the distributions of the regions, and make better use of the y-axis. I also removed labels because they were distracting and messy, and did not include all countries.
+
 # Part Two: Broad Visualization Improvement
 
 The full Wellcome Global Monitor 2018 report can be found here: <https://wellcome.ac.uk/sites/default/files/wellcome-global-monitor-2018.pdf>. Surprisingly, the visualization above does not appear in the report despite the citation in the bottom corner of the image!
@@ -149,20 +152,41 @@ The full Wellcome Global Monitor 2018 report can be found here: <https://wellcom
 
 7.  Select a data visualization in the report that you think could be improved. Be sure to cite both the page number and figure title. Do your best to tell the story of this graph in words. That is, what is this graph telling you? What do you think the authors meant to convey with it?
 
+    Chart 5.7, page 121
+
+    ![](images/Screenshot 2025-04-13 at 5.40.56 PM.png)
+
 8.  List the variables that appear to be displayed in this visualization.
+
+    Country, % of people claiming to have ever vaccinated their children
 
 9.  Now that you're versed in the grammar of graphics (ggplot), list the aesthetics used and which variables are specified for each.
 
+    fill = % of children vaccinated
+
 10. What type of graph would you call this?
 
+    Map
+
 11. List all of the problems or things you would improve about this graph.
+
+    -   The less than 70% category color is very close to the country not surveyed color.
+
+    -   Too much text in title/subtitle - people will not read all of that
+
+    -   In my opinion, green on a map does not necessarily convey that there is data being communicated on this graph- the color green is often associated with land in general. It could be beneficial to change the color so people don't just scroll past this map.
 
 12. Improve the visualization above by either re-creating it with the issues you identified fixed OR by creating a new visualization that you believe tells the same story better.
 
 ```{r}
 #| label: second-improved-visualization
+#| message: false
+#| warning: false
 
+library(leaflet)
+library(rnaturalearth)
 
+world <- ne_countries()
 ```
 
 ## Third Data Visualization Improvement
@@ -171,20 +195,40 @@ The full Wellcome Global Monitor 2018 report can be found here: <https://wellcom
 
 13. Select a data visualization in the report that you think could be improved. Be sure to cite both the page number and figure title. Do your best to tell the story of this graph in words. That is, what is this graph telling you? What do you think the authors meant to convey with it?
 
+    Chart 4.5, page 84
+
+    ![](images/Screenshot 2025-04-13 at 5.41.38 PM.png)
+
+    This chart is trying to categorize people based on their response to two of the questions. There seems to be the most people in the "Enthusiasts" and "The Included" category. Other than that I have really no idea what they are trying to say with this graph. I think it is poorly done.
+
 14. List the variables that appear to be displayed in this visualization.
+
+    Response type, views on extent to which science benefits society (country level), views on extent to which science benefits people normally (personal level)
 
 15. Now that you're versed in the grammar of graphics (ggplot), list the aesthetics used and which variables are specified for each.
 
+    This seems to be a geom_point(), with aes(x= personal level, y = country level, fill = category, size = percentage in each category)
+
 16. What type of graph would you call this?
+
+    Bubble chart/ plot
 
 17. List all of the problems or things you would improve about this graph.
 
-18. Improve the visualization above by either re-creating it with the issues you identified fixed OR by creating a new visualization that you believe tells the same story better.
+    -   I don't think this is necessarily a good graph to tell the story that is trying to be told. I think a bar chart would be better, as people are not good at identifying/comparing area/size of circles.
 
-19. TEST
+    -   If it is important to tell the story of where every category is located on the plot, a scatterplot could be good
+
+    -   It is not clear what each category corresponds to in terms of answers given.
+
+    -   Axis labels :(
+
+18. Improve the visualization above by either re-creating it with the issues you identified fixed OR by creating a new visualization that you believe tells the same story better.
 
 ```{r}
 #| label: third-improved-visualization
 
 
 ```
+
+**NOTE TO LILY:** maybe a geom_point with responses if quantitative, if not bar chart
