@@ -172,7 +172,7 @@ The full Wellcome Global Monitor 2018 report can be found here: <https://wellcom
 
     Chart 5.7, page 121
 
-    ![](images/Screenshot 2025-04-13 at 5.40.56 PM.png)
+    ![](image/chart5-7.jpg)
 
 8.  List the variables that appear to be displayed in this visualization.
 
@@ -284,7 +284,7 @@ leaflet(mergedmap) %>%
 
     Chart 4.5, page 84
 
-    ![](images/Screenshot 2025-04-13 at 5.41.38 PM.png)
+    ![](image/chart4-5.jpg)
 
     This chart is trying to categorize people based on their response to two of the questions. There seems to be the most people in the "Enthusiasts" and "The Included" category. Other than that I have really no idea what they are trying to say with this graph. I think it is poorly done.
 
@@ -314,25 +314,30 @@ leaflet(mergedmap) %>%
 
 ```{r}
 #| label: third-improved-visualization
+#| message: false
+#| warning: false
+
 
 library(cowplot)
+library(RColorBrewer)
 
 science <- data.full %>% 
   select(Q17, Q18, ViewOfScience) %>% 
   filter(ViewOfScience != 99, Q18 %in% c(1,2)) %>%
   mutate(ViewOfScience = as.factor(ViewOfScience),
          label = case_when(
-           ViewOfScience == 1 ~ "Enthusiast",
-           ViewOfScience == 2 ~ "Included",
-           ViewOfScience == 3 ~ "Excluded",
-           ViewOfScience == 4 ~ "Sceptic"
+           ViewOfScience == 1 ~ "Enthusiast \nYes, Yes",
+           ViewOfScience == 2 ~ "Included \nYes, No",
+           ViewOfScience == 3 ~ "Excluded \nNo, Yes",
+           ViewOfScience == 4 ~ "Sceptic \nNo, No"
          ))
 
 science_long <- pivot_longer(science, cols = c(Q17, Q18), 
                             names_to = "Q", values_to = "Response") %>%
-  mutate(Response = factor(Response))
+  mutate(Response = factor(Response),
+         label = ifelse(Response == 1, "Yes", "No"))
 
-ggplot(data = science, aes(x = "", fill = ViewOfScience))+
+stacked <- ggplot(data = science, aes(x = "", fill = ViewOfScience))+
   geom_bar(position = "fill")+
   geom_text(aes(label = label), 
             stat = "count",
@@ -340,16 +345,36 @@ ggplot(data = science, aes(x = "", fill = ViewOfScience))+
             family = "Times") +
   scale_y_continuous(minor_breaks = NULL, "", 
                      labels = scales::percent_format(accuracy = 1))+
+  scale_fill_brewer(palette = "Paired")+
   theme_cowplot(12)+
   theme(text = element_text("Times"), 
         legend.position = "none", 
         plot.title = element_text(face = "bold"))+
-  labs(title = "Combined view of peoples' opinions on benefits of science \n on a personal and country level",
-       x = "")
+  labs(title = "Combined and individual views of peoples' opinions on benefits of science on a personal and country level",
+       subtitle = "Labels on left show overall and single views on 1) individual and 2) country level benefits of science",
+       x = "Combined Opinion")
 
-ggplot(data = science_long)+
-  geom_bar(aes(x = Q, fill = Response),
-           position = "fill")
+
+
+sidebyside <- ggplot(data = science_long,
+                    aes(x = Q, fill = Response))+
+  geom_bar(position = "fill")+
+  geom_text(aes(label = label), 
+            stat = "count",
+            position = position_fill(vjust = 0.5),
+            family = "Times")+ 
+  scale_y_continuous(breaks = NULL, "", 
+                     labels = element_blank(),
+                     )+
+  scale_x_discrete(labels = c("Individual Level", "Country level"))+
+  theme_cowplot(12)+
+  theme(text = element_text("Times"), 
+        legend.position = "none", 
+        plot.title = element_text(face = "bold"))+
+  labs(title = "",
+       x = "Single Opinion") +
+  scale_fill_manual(values = brewer.pal(12, "Paired")[9:10])
+
+plot_grid(stacked,sidebyside)
+
 ```
-
-**NOTE TO LILY:** maybe a geom_point with responses if quantitative, if not bar chart
