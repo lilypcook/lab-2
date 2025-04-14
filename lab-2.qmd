@@ -262,14 +262,14 @@ mappal <- colorNumeric('RdPu', domain = mergedmap$pctgroup)
 labelpal <- colorFactor('RdPu', domain = mergedmap$grouplabel)
 
 leaflet(mergedmap) %>%
-  addTiles()%>%
+  addTiles() %>%
   addPolygons(
     fillColor = ~ mappal(pctgroup),
     weight = 1, fillOpacity = 0.7,
     color = "lightgray",
-    label = ~paste(name_long, ":", percentlabel)) %>%
+    label = ~ paste(name_long, ":", percentlabel)) %>%
   addLegend(
-    pal = labelpal, values = ~grouplabel,  
+    pal = labelpal, values = ~ grouplabel,  
     title = "People who say their children have been vaccinated"
   )
   
@@ -315,7 +315,41 @@ leaflet(mergedmap) %>%
 ```{r}
 #| label: third-improved-visualization
 
+library(cowplot)
 
+science <- data.full %>% 
+  select(Q17, Q18, ViewOfScience) %>% 
+  filter(ViewOfScience != 99, Q18 %in% c(1,2)) %>%
+  mutate(ViewOfScience = as.factor(ViewOfScience),
+         label = case_when(
+           ViewOfScience == 1 ~ "Enthusiast",
+           ViewOfScience == 2 ~ "Included",
+           ViewOfScience == 3 ~ "Excluded",
+           ViewOfScience == 4 ~ "Sceptic"
+         ))
+
+science_long <- pivot_longer(science, cols = c(Q17, Q18), 
+                            names_to = "Q", values_to = "Response") %>%
+  mutate(Response = factor(Response))
+
+ggplot(data = science, aes(x = "", fill = ViewOfScience))+
+  geom_bar(position = "fill")+
+  geom_text(aes(label = label), 
+            stat = "count",
+            position = position_fill(vjust = 0.5),
+            family = "Times") +
+  scale_y_continuous(minor_breaks = NULL, "", 
+                     labels = scales::percent_format(accuracy = 1))+
+  theme_cowplot(12)+
+  theme(text = element_text("Times"), 
+        legend.position = "none", 
+        plot.title = element_text(face = "bold"))+
+  labs(title = "Combined view of peoples' opinions on benefits of science \n on a personal and country level",
+       x = "")
+
+ggplot(data = science_long)+
+  geom_bar(aes(x = Q, fill = Response),
+           position = "fill")
 ```
 
 **NOTE TO LILY:** maybe a geom_point with responses if quantitative, if not bar chart
